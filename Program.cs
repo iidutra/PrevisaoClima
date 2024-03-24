@@ -1,15 +1,34 @@
+using Microsoft.EntityFrameworkCore;
+using PrevisaoClima.Interface;
+using PrevisaoClima.Service;
+using System.Data;
+using static PrevisaoClima.Repository.MeteorologiaRepository;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                      .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+                      .AddEnvironmentVariables();
+
+builder.Services.AddHttpClient<ServicoMeteorologia>();
+
+builder.Services.AddScoped<IDbConnection>(sp =>
+    new Microsoft.Data.SqlClient.SqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+
+
+// Registrar o ClimaRepository
+builder.Services.AddScoped<IRepositorioMeteorologia, RepositorioMeteorologia>();
+builder.Services.AddScoped<IServicoMeteorologia, ServicoMeteorologia>();
+builder.Services.AddHttpClient<IApiClient, ApiClient>();
+
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
